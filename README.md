@@ -11,7 +11,7 @@ Abra `index.html` em um navegador moderno. A biblioteca de QR Code usada na pág
 Carregue uma biblioteca compatível com `QRCode.js` antes de `pix-qrcode.js`:
 
 ```html
-<script src="vendor/qrcode.min.js"></script>
+<script src="qrcode.min.js"></script>
 <script src="pix-qrcode.js"></script>
 <script>
   const dados = {
