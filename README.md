@@ -59,7 +59,7 @@ Para renderizar o QR Code fora da demonstração, passe uma implementação comp
 
 O payload é estático. Esta biblioteca não processa pagamentos, não consulta a chave no DICT e não cria cobranças dinâmicas. O nome e a cidade informados são os valores incluídos no código; confirme-os com os dados da chave recebedora antes de compartilhar.
 
-O arquivo `vendor/qrcode.min.js` é QRCode.js, distribuído sob licença MIT; o texto da licença está em `vendor/LICENSE.qrcodejs`.
+O arquivo `vendor/qrcode.min.js` é QRCode.js, distribuído sob licença MIT; o texto da licença está em `LICENSE.qrcodejs`.
 
 ## Referências
 
