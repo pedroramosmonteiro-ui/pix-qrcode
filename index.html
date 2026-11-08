@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>pix-qrcode — gerador de QR Code Pix</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17221b;
+        --muted: #647168;
+        --line: #dce3de;
+        --surface: #ffffff;
+        --soft: #f5f8f5;
+        --green: #087747;
+        --green-dark: #075e39;
+        --green-wash: #edf7f0;
+        --danger: #ad2f30;
+        --radius: 10px;
+        --sans: "Inter", "Segoe UI", Arial, sans-serif;
+        --serif: Georgia, "Times New Roman", serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--surface);
+        color: var(--ink);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button, input { font: inherit; }
+
+      .site-header {
+        min-height: 76px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+      }
+
+      .header-inner, main, .site-footer {
+        width: min(1160px, calc(100% - 64px));
+        margin: 0 auto;
+      }
+
+      .wordmark {
+        color: var(--ink);
+        font-family: var(--serif);
+        font-size: 25px;
+        font-weight: 700;
+        letter-spacing: -1.1px;
+        text-decoration: none;
+      }
+
+      main { padding: 68px 0 76px; }
+
+      .intro { max-width: 840px; }
+
+      h1 {
+        margin: 0;
+        font-family: var(--serif);
+        font-size: clamp(38px, 5vw, 56px);
+        font-weight: 700;
+        letter-spacing: -1.8px;
+        line-height: 1.08;
+      }
+
+      .intro p {
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 19px;
+        line-height: 1.55;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+        gap: 52px;
+        margin-top: 54px;
+      }
+
+      .form-panel { min-width: 0; }
+
+      .field { margin-bottom: 22px; }
+
+      label {
+        display: block;
+        margin-bottom: 9px;
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 650;
+      }
+
+      .optional {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 450;
+      }
+
+      input {
+        display: block;
+        width: 100%;
+        min-height: 52px;
+        padding: 13px 15px;
+        border: 1px solid #bac5bd;
+        border-radius: 7px;
+        background: #fff;
+        color: var(--ink);
+        font-size: 16px;
+        transition: border-color 120ms ease, box-shadow 120ms ease;
+      }
+
+      input::placeholder { color: #8a958d; }
+
+      input:hover { border-color: #7e8c82; }
+
+      input:focus-visible, button:focus-visible, summary:focus-visible {
+        outline: 3px solid #9bd8b4;
+        outline-offset: 2px;
+      }
+
+      input[aria-invalid="true"] { border-color: var(--danger); }
+
+      .field-help, .field-error {
+        margin: 7px 0 0;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .field-help { color: var(--muted); }
+      .field-error { color: var(--danger); }
+
+      .primary-button, .secondary-button {
+        min-height: 50px;
+        border-radius: 7px;
+        font-size: 15px;
+        font-weight: 650;
+        cursor: pointer;
+        transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+      }
+
+      .primary-button {
+        width: 100%;
+        margin-top: 5px;
+        border: 1px solid var(--green);
+        background: var(--green);
+        color: #fff;
+      }
+
+      .primary-button:hover:not(:disabled) { background: var(--green-dark); }
+      .primary-button:active:not(:disabled), .secondary-button:active:not(:disabled) { transform: translateY(1px); }
+
+      .secondary-button {
+        width: 100%;
+        border: 1px solid #aebbb2;
+        background: #fff;
+        color: var(--green-dark);
+      }
+
+      .secondary-button:hover:not(:disabled) { background: var(--green-wash); border-color: var(--green); }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+      }
+
+      .preview-panel {
+        min-width: 0;
+        padding-left: 52px;
+        border-left: 1px solid var(--line);
+      }
+
+      .preview-panel h2 {
+        margin: 5px 0 6px;
+        font-family: var(--serif);
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.7px;
+      }
+
+      .preview-caption {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .qr-stage {
+        display: grid;
+        min-height: 316px;
+        place-items: center;
+        margin: 22px 0 20px;
+      }
+
+      .qr-code {
+        display: grid;
+        width: 280px;
+        height: 280px;
+        place-items: center;
+        background: #fff;
+      }
+
+      .qr-code img, .qr-code canvas {
+        display: block;
+        image-rendering: pixelated;
+      }
+
+      .empty-state {
+        display: grid;
+        width: 280px;
+        min-height: 280px;
+        place-items: center;
+        padding: 28px;
+        border: 1px dashed #c4cec7;
+        border-radius: 8px;
+        background: #fbfcfb;
+        color: var(--muted);
+        text-align: center;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .preview-actions { display: grid; gap: 10px; }
+
+      .feedback {
+        min-height: 22px;
+        margin: 11px 0 0;
+        color: var(--green-dark);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .feedback[data-tone="error"] { color: var(--danger); }
+
+      .payload-details { margin-top: 16px; }
+
+      .payload-details summary {
+        width: fit-content;
+        color: var(--green-dark);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .payload-details textarea {
+        display: block;
+        width: 100%;
+        min-height: 78px;
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: #344238;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+        overflow-wrap: anywhere;
+      }
+
+      .privacy-note {
+        margin: 28px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .site-footer {
+        padding: 18px 0 30px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .resize-none { resize: none; }
+
+      @media (max-width: 820px) {
+        .header-inner, main, .site-footer { width: min(100% - 40px, 600px); }
+        main { padding-top: 48px; }
+        .workspace { grid-template-columns: 1fr; gap: 42px; margin-top: 38px; }
+        .preview-panel { padding: 34px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+        .qr-stage { min-height: 290px; }
+      }
+
+      @media (max-width: 420px) {
+        .header-inner, main, .site-footer { width: calc(100% - 32px); }
+        .site-header { min-height: 66px; }
+        main { padding: 39px 0 50px; }
+        h1 { font-size: 38px; letter-spacing: -1.25px; }
+        .intro p { font-size: 16px; }
+        .workspace { margin-top: 32px; }
+        .preview-panel h2 { font-size: 26px; }
+        .qr-stage { min-height: 270px; }
+        .qr-code, .empty-state { width: 260px; height: 260px; min-height: 260px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html:focus-within { scroll-behavior: auto; }
+        input, button { transition-duration: 0.01ms; }
+      }
+
+      [hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="wordmark" href="./index.html" aria-label="pix-qrcode, início">pix-qrcode</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <h1 id="page-title">Seu Pix, pronto para escanear.</h1>
+        <p>Informe os dados e compartilhe o código em segundos.</p>
+      </section>
+
+      <section class="workspace" aria-label="Gerador de QR Code Pix">
+        <form class="form-panel" id="pix-form" novalidate>
+          <div class="field">
+            <label for="pix-key">Chave Pix</label>
+            <input id="pix-key" name="key" type="text" autocomplete="off" placeholder="seuemail@exemplo.com.br" aria-describedby="key-help key-error" required />
+            <p class="field-help" id="key-help">CPF, CNPJ, e-mail, telefone ou chave aleatória.</p>
+            <p class="field-error" id="key-error" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="pix-amount">Valor em reais <span class="optional">(opcional)</span></label>
+            <input id="pix-amount" name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="Ex.: 49,90" aria-describedby="amount-error" />
+            <p class="field-error" id="amount-error" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="pix-name">Nome do recebedor</label>
+            <input id="pix-name" name="name" type="text" autocomplete="organization" placeholder="Loja Exemplo" aria-describedby="name-error" required />
+            <p class="field-error" id="name-error" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="pix-city">Cidade</label>
+            <input id="pix-city" name="city" type="text" autocomplete="address-level2" value="SAO PAULO" aria-describedby="city-help city-error" required />
+            <p class="field-help" id="city-help">O campo começa com São Paulo; ajuste se necessário.</p>
+            <p class="field-error" id="city-error" hidden></p>
+          </div>
+
+          <button class="primary-button" id="copy-primary" type="button" disabled>Copiar Pix copia e cola</button>
+          <p class="feedback" id="copy-feedback" role="status" aria-live="polite"></p>
+        </form>
+
+        <section class="preview-panel" aria-labelledby="preview-title">
+          <h2 id="preview-title">Prévia do QR Code</h2>
+          <p class="preview-caption" id="preview-caption">Atualiza enquanto você digita</p>
+
+          <div class="qr-stage">
+            <div class="empty-state" id="empty-state">Preencha a chave Pix e o nome do recebedor para ver o QR Code.</div>
+            <div class="qr-code" id="qr-code" hidden></div>
+          </div>
+
+          <div class="preview-actions">
+            <button class="secondary-button" id="copy-secondary" type="button" disabled>Copiar código</button>
+          </div>
+          <p class="feedback" id="preview-feedback" role="status" aria-live="polite"></p>
+
+          <details class="payload-details" id="payload-details" hidden>
+            <summary>Ver Pix copia e cola</summary>
+            <textarea class="resize-none" id="pix-payload" readonly aria-label="Texto Pix copia e cola"></textarea>
+          </details>
+
+          <p class="privacy-note">O código é montado neste navegador. Confira os dados com o seu banco antes de compartilhar.</p>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      Este gerador cria um QR Code Pix estático. O valor pode ser informado agora ou deixado em branco para que o pagador escolha quanto enviar.
+    </footer>
+
+    <script src="./qrcode.min.js"></script>
+    <script src="./pix-qrcode.js"></script>
+    <script>
+      (() => {
+        const form = document.getElementById("pix-form");
+        const fields = {
+          key: document.getElementById("pix-key"),
+          amount: document.getElementById("pix-amount"),
+          name: document.getElementById("pix-name"),
+          city: document.getElementById("pix-city"),
+        };
+        const qrCode = document.getElementById("qr-code");
+        const emptyState = document.getElementById("empty-state");
+        const payloadTextarea = document.getElementById("pix-payload");
+        const payloadDetails = document.getElementById("payload-details");
+        const primaryCopy = document.getElementById("copy-primary");
+        const secondaryCopy = document.getElementById("copy-secondary");
+        const copyFeedback = document.getElementById("copy-feedback");
+        const previewFeedback = document.getElementById("preview-feedback");
+        const previewCaption = document.getElementById("preview-caption");
+        let currentPayload = "";
+
+        function showFieldError(fieldName, message) {
+          const field = fields[fieldName];
+          const error = document.getElementById(`${fieldName}-error`);
+          if (!field || !error) return;
+
+          field.setAttribute("aria-invalid", "true");
+          error.textContent = message;
+          error.hidden = false;
+        }
+
+        function clearFieldErrors() {
+          Object.entries(fields).forEach(([fieldName, field]) => {
+            const error = document.getElementById(`${fieldName}-error`);
+            field.removeAttribute("aria-invalid");
+            error.textContent = "";
+            error.hidden = true;
+          });
+        }
+
+        function clearGeneratedState() {
+          currentPayload = "";
+          payloadTextarea.value = "";
+          payloadDetails.hidden = true;
+          qrCode.hidden = true;
+          qrCode.replaceChildren();
+          emptyState.hidden = false;
+          primaryCopy.disabled = true;
+          secondaryCopy.disabled = true;
+          copyFeedback.textContent = "";
+        }
+
+        function updatePreview() {
+          clearFieldErrors();
+          clearGeneratedState();
+          previewFeedback.textContent = "";
+          previewFeedback.dataset.tone = "";
+
+          if (!fields.key.value.trim() || !fields.name.value.trim()) {
+            previewCaption.textContent = "Atualiza enquanto você digita";
+            return;
+          }
+
+          const data = {
+            key: fields.key.value,
+            amount: fields.amount.value,
+            name: fields.name.value,
+            city: fields.city.value,
+          };
+
+          try {
+            const result = PixQRCode.renderPixQRCode(qrCode, data, {
+              width: 256,
+              height: 256,
+              colorDark: "#10251a",
+              colorLight: "#ffffff",
+              ariaLabel: `QR Code Pix para ${fields.name.value.trim()}`,
+            });
+
+            currentPayload = result.payload;
+            payloadTextarea.value = currentPayload;
+            payloadDetails.hidden = false;
+            qrCode.hidden = false;
+            emptyState.hidden = true;
+            primaryCopy.disabled = false;
+            secondaryCopy.disabled = false;
+            previewCaption.textContent = "Atualizado com os dados informados";
+          } catch (error) {
+            if (error.field) {
+              showFieldError(error.field, error.message);
+            }
+
+            previewFeedback.textContent = error.message || "Confira os dados informados.";
+            previewFeedback.dataset.tone = "error";
+            previewCaption.textContent = "Corrija os dados para gerar a prévia";
+          }
+        }
+
+        async function copyPayload() {
+          if (!currentPayload) return;
+
+          try {
+            await navigator.clipboard.writeText(currentPayload);
+            copyFeedback.textContent = "Pix copia e cola copiado.";
+            copyFeedback.dataset.tone = "success";
+          } catch (error) {
+            payloadDetails.open = true;
+            payloadTextarea.focus();
+            payloadTextarea.select();
+            copyFeedback.textContent = "Não foi possível copiar automaticamente. Selecione o texto exibido abaixo.";
+            copyFeedback.dataset.tone = "error";
+          }
+        }
+
+        Object.values(fields).forEach((field) => {
+          field.addEventListener("input", updatePreview);
+        });
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          updatePreview();
+          if (!currentPayload) {
+            const firstMissing = [fields.key, fields.name, fields.city].find((field) => !field.value.trim());
+            if (firstMissing) firstMissing.focus();
+          }
+        });
+
+        primaryCopy.addEventListener("click", copyPayload);
+        secondaryCopy.addEventListener("click", copyPayload);
+      })();
+    </script>
+  </body>
+</html>

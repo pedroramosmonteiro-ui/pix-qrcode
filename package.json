@@ -1,0 +1,6 @@
+{
+  "name": "pix-qrcode-simples",
+  "version": "1.0.0",
+  "description": "Geração de Pix copia e cola e QR Code estático BR Code",
+  "main": "pix-qrcode.js"
+}
